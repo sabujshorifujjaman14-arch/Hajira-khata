@@ -1,0 +1,59 @@
+name: Build Hajira Khata APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract project ZIP
+        run: unzip -q hajira-khata-android-ready.zip -d .
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        working-directory: hajira-khata
+        run: |
+          npm ci
+          npm install @capacitor/android@^8.0.0 @capacitor/cli@^8.0.0
+
+      - name: Build app
+        working-directory: hajira-khata
+        run: npm run build
+
+      - name: Create Android project
+        working-directory: hajira-khata
+        run: npx cap add android
+
+      - name: Sync Android
+        working-directory: hajira-khata
+        run: npx cap sync android
+
+      - name: Generate APK
+        working-directory: hajira-khata/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hajira-Khata-APK
+          path: hajira-khata/android/app/build/outputs/apk/debug/app-debug.apk
