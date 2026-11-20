@@ -1,3 +1,4 @@
+
 name: Build Hajira Khata APK
 
 on:
@@ -9,44 +10,41 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract project ZIP
-        run: unzip -q hajira-khata-android-ready.zip -d .
-
-      - name: Setup Node
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Setup Java
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
 
+      - name: Extract app project
+        run: unzip -o hajira-khata-android-ready.zip -d .
+
       - name: Install dependencies
         working-directory: hajira-khata
-        run: |
-          npm ci
-          npm install @capacitor/android@^8.0.0 @capacitor/cli@^8.0.0
+        run: npm install
 
-      - name: Build app
+      - name: Build web app
         working-directory: hajira-khata
         run: npm run build
 
-      - name: Create Android project
+      - name: Add Android platform
         working-directory: hajira-khata
-        run: npx cap add android
+        run: npx --yes @capacitor/cli@8.0.0 add android
 
-      - name: Sync Android
+      - name: Sync Capacitor plugins
         working-directory: hajira-khata
-        run: npx cap sync android
+        run: npx --yes @capacitor/cli@8.0.0 sync android
 
-      - name: Generate APK
+      - name: Build debug APK
         working-directory: hajira-khata/android
         run: |
           chmod +x gradlew
@@ -57,3 +55,4 @@ jobs:
         with:
           name: Hajira-Khata-APK
           path: hajira-khata/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
